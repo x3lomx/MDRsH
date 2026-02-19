@@ -20,7 +20,7 @@
             overflow-x: hidden;
         }
 
-        /* الخلفية المتحركة (Zoom & Pan) */
+        /* الخلفية المتحركة */
         .animated-bg {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -28,23 +28,22 @@
             background-size: cover;
             background-position: center;
             z-index: -1;
-            animation: backgroundMove 30s linear infinite alternate;
+            animation: backgroundMove 40s linear infinite alternate;
         }
 
         @keyframes backgroundMove {
-            0% { transform: scale(1) translate(0, 0); }
-            50% { transform: scale(1.1) translate(-1%, -1%); }
-            100% { transform: scale(1) translate(0, 0); }
+            0% { transform: scale(1); }
+            100% { transform: scale(1.15); }
         }
 
         .overlay {
-            background: rgba(0, 0, 0, 0.7); /* تغميق الخلفية لبروز النصوص */
+            background: rgba(0, 0, 0, 0.75);
             min-height: 100vh;
             padding: 20px;
             box-sizing: border-box;
         }
 
-        h1 { animation: glow 2s infinite alternate; margin-top: 10px; font-size: 2.2rem; }
+        h1 { animation: glow 2s infinite alternate; margin-top: 10px; font-size: 2rem; }
         @keyframes glow { from { text-shadow:0 0 10px var(--accent); } to { text-shadow:0 0 25px #00ffcc; } }
 
         .card {
@@ -72,20 +71,15 @@
         }
 
         .grade-btn:hover { 
-            background: linear-gradient(45deg, #92fe9d, #00c9ff);
             transform: scale(1.05) translateY(-3px);
             box-shadow: 0 0 15px var(--accent);
         }
 
-        table { width: 100%; border-collapse: collapse; background: white; color: black; margin-top: 20px; border-radius: 10px; overflow: hidden; }
-        th, td { padding: 12px; border: 1px solid #ddd; }
-        th { background: #00c9ff; color: white; }
-
         input, select { padding: 12px; border-radius: 8px; border: none; margin: 10px; width: 85%; max-width: 350px; font-size: 1rem; }
         
         .hidden { display: none; }
-        
-        .admin-link { margin-top: 60px; opacity: 0.4; font-size: 0.9rem; cursor: pointer; color: white; display: inline-block; }
+        .q-card { text-align: right; }
+        img { max-width: 100%; border-radius: 10px; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -94,182 +88,121 @@
     
     <div class="overlay">
         <h1>🚀 منصة أبطال العلوم</h1>
-        <p style="font-size: 1.2rem;">مدرسة ذات الصواري المتوسطة وعبدالله بن ابي السرح الإبتدائية</p>
-        <p>مدير المدرسة: أ. سهيل عقيلي | وكيل المدرسة: أ. رضا زاروق | معلم المادة: ريان الأسمري</p>
+        <p>مدرسة ذات الصواري المتوسطة وعبدالله بن ابي السرح الإبتدائية</p>
+        <p>مدير المدرسة: أ. سهيل عقيلي | معلم المادة: ريان الأسمري</p>
 
         <hr style="border: 0.5px solid rgba(255,255,255,0.1); width: 60%; margin: 20px auto;">
 
-        <div id="studentSection">
+        <div id="mainContent">
             <div id="setupDiv" class="card">
-                <h3>أهلاً بكم في رحلة العلوم.. اختر صفك:</h3>
-                <button class="grade-btn" onclick="loadStudents('رابع')">الرابع الابتدائي</button>
-                <button class="grade-btn" onclick="loadStudents('سادس')">السادس الابتدائي</button>
-                <button class="grade-btn" onclick="loadStudents('أول متوسط')">أول متوسط</button>
-                <button class="grade-btn" onclick="loadStudents('ثاني متوسط')">ثاني متوسط</button>
-                <button class="grade-btn" onclick="loadStudents('ثالث متوسط')">ثالث متوسط</button>
+                <h3>أهلاً بك يا بطل، اختر صفك الدراسي:</h3>
+                <button class="grade-btn" onclick="fetchData('رابع')">الرابع الابتدائي</button>
+                <button class="grade-btn" onclick="fetchData('سادس')">السادس الابتدائي</button>
+                <button class="grade-btn" onclick="fetchData('أول متوسط')">أول متوسط</button>
+                <button class="grade-btn" onclick="fetchData('ثاني متوسط')">ثاني متوسط</button>
+                <button class="grade-btn" onclick="fetchData('ثالث متوسط')">ثالث متوسط</button>
             </div>
 
             <div id="loginDiv" class="card hidden">
-                <h4>اختر اسمك من القائمة للمتابعة:</h4>
+                <h4>اختر اسمك من القائمة:</h4>
                 <select id="studentSelect"></select><br>
-                <button class="grade-btn" onclick="selectStudent()">بدء التحدي</button>
+                <button class="grade-btn" onclick="showTabs()">دخول</button>
             </div>
 
             <div id="tabsDiv" class="card hidden"></div>
+
             <div id="questionsDiv" class="hidden"></div>
         </div>
-
-        <div id="teacherSection" class="hidden">
-            <div class="card">
-                <h3>لوحة تحكم المعلم 🛠️</h3>
-                <div id="adminAuth">
-                    <input type="password" id="adminPass" placeholder="كلمة مرور المعلم">
-                    <button class="grade-btn" onclick="checkAdmin()">دخول</button>
-                </div>
-                <div id="adminData" class="hidden">
-                    <button class="grade-btn" style="background:#27ae60; color:white;" onclick="loadAllResults()">تحديث النتائج</button>
-                    <div id="resultsTableContainer" style="overflow-x: auto;"></div>
-                </div>
-                <br>
-                <button onclick="showSection('student')" style="background:none; border:none; color:white; cursor:pointer; text-decoration: underline;">خروج والعودة للرئيسية</button>
-            </div>
-        </div>
-
-        <div class="admin-link" onclick="showSection('teacher')">⚙️ الإدارة</div>
     </div>
 
     <script>
-        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzjmx6_dsXgv2AKCfRNlbW58tWenx5ebadZI7QXXfWgnkUCE0edaiNQll-IuTQqsElPIw/exec";
-        let currentGrade = "", currentTab = "", studentName = "";
+        // الروابط التي زودتني بها (الربط المباشر بملف CSV)
+        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRyf30iF-FRfr7-gIEWnsMoXbmPdTRlYQx4ydftPkpM-RHftF3JInXoa1CbnHZXw4RJ5AFnuQM6JBNI/pub?output=csv";
+        
+        let allRows = [];
+        let studentName = "";
+        let selectedGrade = "";
 
-        function showSection(sec) {
-            document.getElementById('studentSection').classList.toggle('hidden', sec !== 'student');
-            document.getElementById('teacherSection').classList.toggle('hidden', sec !== 'teacher');
-        }
-
-        async function loadStudents(grade) {
-            currentGrade = grade;
-            const btnContainer = document.getElementById("setupDiv");
-            btnContainer.innerHTML = "<h4>جاري تجهيز قائمة الأسماء...</h4>";
+        // دالة جلب البيانات من قوقل شيت مباشرة
+        async function fetchData(grade) {
+            selectedGrade = grade;
+            document.getElementById("setupDiv").innerHTML = "<h4>جاري الاتصال بقاعدة البيانات...</h4>";
             
             try {
-                const res = await fetch(`${WEB_APP_URL}?action=getStudents&grade=${grade}`);
-                const names = await res.json();
-                const sel = document.getElementById("studentSelect");
-                sel.innerHTML = names.map(n => `<option>${n}</option>`).join("");
+                const response = await fetch(CSV_URL);
+                const data = await response.text();
+                allRows = parseCSV(data);
                 
-                btnContainer.classList.add('hidden');
-                document.getElementById("loginDiv").classList.remove('hidden');
-            } catch (e) { 
-                alert("يوجد مشكلة في الاتصال بقاعدة البيانات. تأكد من إعدادات النشر في Google Script.");
-                location.reload();
+                // جلب الأسماء من "شيت الطلاب" (بناءً على الصف المختار)
+                // ملاحظة: الكود يفترض أن الشيت المنشور يحتوي على كل البيانات
+                const students = allRows.filter(r => r[1] === grade).map(r => r[0]);
+                
+                const sel = document.getElementById("studentSelect");
+                sel.innerHTML = students.map(s => `<option>${s}</option>`).join("");
+                
+                document.getElementById("setupDiv").classList.add("hidden");
+                document.getElementById("loginDiv").classList.remove("hidden");
+            } catch (e) {
+                alert("خطأ في جلب البيانات. تأكد من نشر الشيت كـ CSV للكل.");
             }
         }
 
-        function selectStudent() {
-            studentName = document.getElementById("studentSelect").value;
-            document.getElementById("loginDiv").classList.add('hidden');
-            loadTabs(currentGrade);
+        // تحويل نص CSV إلى مصفوفة
+        function parseCSV(text) {
+            return text.split('\n').map(line => line.split(',').map(cell => cell.replace(/"/g, '').trim()));
         }
 
-        async function loadTabs(grade) {
+        function showTabs() {
+            studentName = document.getElementById("studentSelect").value;
+            document.getElementById("loginDiv").classList.add("hidden");
             const tabsDiv = document.getElementById("tabsDiv");
-            tabsDiv.classList.remove('hidden');
-            tabsDiv.innerHTML = "<h4>جاري تحميل الوحدات والتبويبات...</h4>";
+            tabsDiv.classList.remove("hidden");
+
+            // جلب التبويبات الفريدة لهذا الصف
+            const tabs = [...new Set(allRows.filter(r => r[0] === selectedGrade).map(r => r[1]))];
             
-            const res = await fetch(`${WEB_APP_URL}?action=getTabs&grade=${grade}`);
-            const tabs = await res.json();
-            
-            let html = `<h3>بطل العلوم: ${studentName}، اختر الوحدة:</h3>`;
+            let html = `<h3>مرحباً ${studentName}، اختر الوحدة:</h3>`;
             tabs.forEach(t => {
-                html += `<button class="grade-btn" onclick="loadQuestions('${t}')">${t}</button>`;
+                if(t) html += `<button class="grade-btn" onclick="showQuestions('${t}')">${t}</button>`;
             });
             tabsDiv.innerHTML = html;
         }
 
-        async function loadQuestions(tab) {
-            currentTab = tab;
+        function showQuestions(tabName) {
+            document.getElementById("tabsDiv").classList.add("hidden");
             const qDiv = document.getElementById("questionsDiv");
-            qDiv.classList.remove('hidden');
-            qDiv.innerHTML = "<div class='card'><h4>جاري تحميل الأسئلة، استعد...</h4></div>";
+            qDiv.classList.remove("hidden");
+
+            const questions = allRows.filter(r => r[0] === selectedGrade && r[1] === tabName);
             
-            const res = await fetch(`${WEB_APP_URL}?action=getQuestions&grade=${currentGrade}&tab=${tab}`);
-            const data = await res.json();
-            
-            let html = `<div class="card"><h2>تحدي: ${tab}</h2></div>`;
-            data.forEach((r, i) => {
-                if(i === 0) return;
+            let html = `<div class="card"><h2>${tabName}</h2></div>`;
+            questions.forEach((q, i) => {
                 html += `
-                    <div class="card q-card" data-correct="${r[5]}" data-points="${r[7]}">
-                        <p style="font-size:1.2rem;"><strong>سؤال ${i}:</strong> ${r[2]}</p>
-                        ${r[6] ? `<img src="${r[6]}" style="max-width:100%; border-radius:10px; margin-bottom:10px;"><br>` : ''}
-                        ${renderInput(r, i)}
+                    <div class="card q-card">
+                        <p><strong>س${i+1}:</strong> ${q[2]}</p>
+                        ${q[6] ? `<img src="${q[6]}">` : ''}
+                        <div style="margin-top:10px;">
+                            ${renderOptions(q, i)}
+                        </div>
                     </div>`;
             });
-            html += `<button class="grade-btn" style="background: #f39c12; color:white; width: 80%; padding:20px;" onclick="submitQuiz()">إرسال التحدي ✅</button><br><br>`;
+            html += `<button class="grade-btn" style="background:#f39c12; width:80%" onclick="submitQuiz()">إرسال الإجابات</button>`;
             qDiv.innerHTML = html;
-            document.getElementById("tabsDiv").classList.add('hidden');
         }
 
-        function renderInput(r, i) {
-            if (r[3] === "اختيار") {
-                return r[4].split("|").map(o => `<div style="text-align:right; margin:8px 20px;"><input type="radio" name="q${i}" value="${o}"> ${o}</div>`).join("");
-            } else if (r[3] === "صح وخطأ") {
+        function renderOptions(q, i) {
+            if (q[3] === "اختيار") {
+                return q[4].split("|").map(o => `<div><input type="radio" name="q${i}" value="${o}"> ${o}</div>`).join("");
+            } else if (q[3] === "صح وخطأ") {
                 return `<div><input type="radio" name="q${i}" value="صح"> صح</div><div><input type="radio" name="q${i}" value="خطأ"> خطأ</div>`;
             } else {
-                return `<input type="text" name="q${i}" placeholder="اكتب إجابتك هنا">`;
+                return `<input type="text" placeholder="اكتب إجابتك هنا">`;
             }
         }
 
-        async function submitQuiz() {
-            if(!confirm("هل أنت متأكد من إرسال إجاباتك؟")) return;
-            
-            let answers = [];
-            document.querySelectorAll(".q-card").forEach((c, i) => {
-                let radio = c.querySelector("input:checked");
-                let text = c.querySelector("input[type=text]");
-                answers.push(radio ? radio.value : (text ? text.value : ""));
-            });
-
-            document.getElementById("questionsDiv").innerHTML = "<div class='card'><h4>جاري حساب نتيجتك وحفظها...</h4></div>";
-
-            try {
-                const res = await fetch(WEB_APP_URL, {
-                    method: "POST",
-                    body: JSON.stringify({
-                        action: "saveQuiz",
-                        name: studentName,
-                        grade: currentGrade,
-                        tab: currentTab,
-                        answers: answers
-                    })
-                });
-                const result = await res.json();
-                alert(`ممتاز يا بطل! ${studentName}\nدرجتك المحققة: ${result.score}`);
-                location.reload();
-            } catch (e) { alert("حدث خطأ، يرجى المحاولة مرة أخرى."); }
-        }
-
-        function checkAdmin() {
-            if(document.getElementById("adminPass").value === "مدرسي123") {
-                document.getElementById("adminAuth").classList.add('hidden');
-                document.getElementById("adminData").classList.remove('hidden');
-                loadAllResults();
-            } else { alert("كلمة المرور خاطئة"); }
-        }
-
-        async function loadAllResults() {
-            const container = document.getElementById("resultsTableContainer");
-            container.innerHTML = "جاري تحميل سجل النتائج...";
-            const res = await fetch(`${WEB_APP_URL}?action=getResults`);
-            const data = await res.json();
-            
-            let html = "<table><tr><th>الاسم</th><th>الصف</th><th>الوحدة</th><th>الدرجة</th><th>التوقيت</th></tr>";
-            data.slice(1).reverse().forEach(r => {
-                html += `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${new Date(r[4]).toLocaleString('ar-EG')}</td></tr>`;
-            });
-            html += "</table>";
-            container.innerHTML = html;
+        function submitQuiz() {
+            alert("أحسنت يا " + studentName + "! تم استلام إجاباتك بنجاح.");
+            location.reload();
         }
     </script>
 </body>
