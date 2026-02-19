@@ -20,7 +20,7 @@
             overflow-x: hidden;
         }
 
-        /* الخلفية المتحركة */
+        /* الخلفية المتحركة (Zoom Effect) */
         .animated-bg {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -28,12 +28,12 @@
             background-size: cover;
             background-position: center;
             z-index: -1;
-            animation: backgroundMove 40s linear infinite alternate;
+            animation: backgroundMove 30s linear infinite alternate;
         }
 
         @keyframes backgroundMove {
-            0% { transform: scale(1); }
-            100% { transform: scale(1.15); }
+            from { transform: scale(1); }
+            to { transform: scale(1.1); }
         }
 
         .overlay {
@@ -43,7 +43,7 @@
             box-sizing: border-box;
         }
 
-        h1 { animation: glow 2s infinite alternate; margin-top: 10px; font-size: 2rem; }
+        h1 { animation: glow 2s infinite alternate; margin-top: 10px; font-size: 2.2rem; }
         @keyframes glow { from { text-shadow:0 0 10px var(--accent); } to { text-shadow:0 0 25px #00ffcc; } }
 
         .card {
@@ -58,28 +58,24 @@
         }
 
         .grade-btn {
-            padding: 15px 30px;
-            margin: 10px;
-            border: none;
-            border-radius: 12px;
+            padding: 15px 30px; margin: 10px; border: none; border-radius: 12px;
             background: linear-gradient(45deg, #00c9ff, #92fe9d);
-            color: #002b36;
-            font-weight: bold;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: 0.4s;
+            color: #002b36; font-weight: bold; font-size: 1.1rem;
+            cursor: pointer; transition: 0.4s;
         }
 
-        .grade-btn:hover { 
-            transform: scale(1.05) translateY(-3px);
-            box-shadow: 0 0 15px var(--accent);
+        .grade-btn:hover { transform: scale(1.05) translateY(-3px); box-shadow: 0 0 15px var(--accent); }
+
+        select, input[type="text"] {
+            padding: 12px; border-radius: 8px; border: none; margin: 10px;
+            width: 85%; max-width: 350px; font-size: 1rem;
         }
 
-        input, select { padding: 12px; border-radius: 8px; border: none; margin: 10px; width: 85%; max-width: 350px; font-size: 1rem; }
-        
+        .q-card { text-align: right; line-height: 1.6; }
         .hidden { display: none; }
-        .q-card { text-align: right; }
-        img { max-width: 100%; border-radius: 10px; margin-top: 10px; }
+        img { max-width: 100%; border-radius: 10px; margin: 15px 0; }
+        
+        .footer-info { font-size: 0.9rem; opacity: 0.8; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -89,24 +85,24 @@
     <div class="overlay">
         <h1>🚀 منصة أبطال العلوم</h1>
         <p>مدرسة ذات الصواري المتوسطة وعبدالله بن ابي السرح الإبتدائية</p>
-        <p>مدير المدرسة: أ. سهيل عقيلي | معلم المادة: ريان الأسمري</p>
+        <p class="footer-info">مدير المدرسة: أ. سهيل عقيلي | معلم المادة: ريان الأسمري</p>
 
         <hr style="border: 0.5px solid rgba(255,255,255,0.1); width: 60%; margin: 20px auto;">
 
         <div id="mainContent">
             <div id="setupDiv" class="card">
-                <h3>أهلاً بك يا بطل، اختر صفك الدراسي:</h3>
-                <button class="grade-btn" onclick="fetchData('رابع')">الرابع الابتدائي</button>
-                <button class="grade-btn" onclick="fetchData('سادس')">السادس الابتدائي</button>
-                <button class="grade-btn" onclick="fetchData('أول متوسط')">أول متوسط</button>
-                <button class="grade-btn" onclick="fetchData('ثاني متوسط')">ثاني متوسط</button>
-                <button class="grade-btn" onclick="fetchData('ثالث متوسط')">ثالث متوسط</button>
+                <h3>أهلاً بك يا بطل، اختر صفك الدراسي للبدء:</h3>
+                <button class="grade-btn" onclick="fetchCSV('رابع')">الرابع الابتدائي</button>
+                <button class="grade-btn" onclick="fetchCSV('سادس')">السادس الابتدائي</button>
+                <button class="grade-btn" onclick="fetchCSV('أول متوسط')">أول متوسط</button>
+                <button class="grade-btn" onclick="fetchCSV('ثاني متوسط')">ثاني متوسط</button>
+                <button class="grade-btn" onclick="fetchCSV('ثالث متوسط')">ثالث متوسط</button>
             </div>
 
             <div id="loginDiv" class="card hidden">
                 <h4>اختر اسمك من القائمة:</h4>
                 <select id="studentSelect"></select><br>
-                <button class="grade-btn" onclick="showTabs()">دخول</button>
+                <button class="grade-btn" onclick="showTabs()">دخول للمنصة</button>
             </div>
 
             <div id="tabsDiv" class="card hidden"></div>
@@ -116,26 +112,24 @@
     </div>
 
     <script>
-        // الروابط التي زودتني بها (الربط المباشر بملف CSV)
+        // الرابط المباشر لبيانات قوقل شيت (CSV)
         const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRyf30iF-FRfr7-gIEWnsMoXbmPdTRlYQx4ydftPkpM-RHftF3JInXoa1CbnHZXw4RJ5AFnuQM6JBNI/pub?output=csv";
         
-        let allRows = [];
+        let allData = [];
         let studentName = "";
         let selectedGrade = "";
 
-        // دالة جلب البيانات من قوقل شيت مباشرة
-        async function fetchData(grade) {
+        async function fetchCSV(grade) {
             selectedGrade = grade;
-            document.getElementById("setupDiv").innerHTML = "<h4>جاري الاتصال بقاعدة البيانات...</h4>";
+            document.getElementById("setupDiv").innerHTML = "<h4>جاري الاتصال بالسحابة...</h4>";
             
             try {
                 const response = await fetch(CSV_URL);
-                const data = await response.text();
-                allRows = parseCSV(data);
+                const csvText = await response.text();
+                allData = parseCSV(csvText);
                 
-                // جلب الأسماء من "شيت الطلاب" (بناءً على الصف المختار)
-                // ملاحظة: الكود يفترض أن الشيت المنشور يحتوي على كل البيانات
-                const students = allRows.filter(r => r[1] === grade).map(r => r[0]);
+                // تصفية الأسماء بناءً على الصف المختار (نفترض العمود 2 هو الصف والعمود 1 هو الاسم)
+                const students = allData.filter(row => row[1] === grade).map(row => row[0]);
                 
                 const sel = document.getElementById("studentSelect");
                 sel.innerHTML = students.map(s => `<option>${s}</option>`).join("");
@@ -143,13 +137,12 @@
                 document.getElementById("setupDiv").classList.add("hidden");
                 document.getElementById("loginDiv").classList.remove("hidden");
             } catch (e) {
-                alert("خطأ في جلب البيانات. تأكد من نشر الشيت كـ CSV للكل.");
+                alert("حدث خطأ في جلب البيانات. تأكد من إعداد 'النشر للويب' في قوقل شيت.");
             }
         }
 
-        // تحويل نص CSV إلى مصفوفة
         function parseCSV(text) {
-            return text.split('\n').map(line => line.split(',').map(cell => cell.replace(/"/g, '').trim()));
+            return text.split('\n').map(row => row.split(',').map(cell => cell.trim().replace(/^"|"$/g, '')));
         }
 
         function showTabs() {
@@ -158,50 +151,50 @@
             const tabsDiv = document.getElementById("tabsDiv");
             tabsDiv.classList.remove("hidden");
 
-            // جلب التبويبات الفريدة لهذا الصف
-            const tabs = [...new Set(allRows.filter(r => r[0] === selectedGrade).map(r => r[1]))];
+            // جلب التبويبات (الوحدات) الفريدة للصف المختار
+            // نفترض أن العمود 1 في شيت الأسئلة هو الصف والعمود 2 هو التبويب
+            const tabs = [...new Set(allData.filter(r => r[0] === selectedGrade).map(r => r[1]))];
             
-            let html = `<h3>مرحباً ${studentName}، اختر الوحدة:</h3>`;
+            let html = `<h3>مرحباً ${studentName}، اختر الوحدة التعليمية:</h3>`;
             tabs.forEach(t => {
-                if(t) html += `<button class="grade-btn" onclick="showQuestions('${t}')">${t}</button>`;
+                if(t && t !== "التبويب") html += `<button class="grade-btn" onclick="loadQuestions('${t}')">${t}</button>`;
             });
             tabsDiv.innerHTML = html;
         }
 
-        function showQuestions(tabName) {
+        function loadQuestions(tabName) {
             document.getElementById("tabsDiv").classList.add("hidden");
             const qDiv = document.getElementById("questionsDiv");
             qDiv.classList.remove("hidden");
 
-            const questions = allRows.filter(r => r[0] === selectedGrade && r[1] === tabName);
+            // تصفية الأسئلة بناءً على الصف والتبويب
+            const questions = allData.filter(r => r[0] === selectedGrade && r[1] === tabName);
             
-            let html = `<div class="card"><h2>${tabName}</h2></div>`;
+            let html = `<div class="card"><h2>وحدة: ${tabName}</h2></div>`;
             questions.forEach((q, i) => {
                 html += `
                     <div class="card q-card">
                         <p><strong>س${i+1}:</strong> ${q[2]}</p>
                         ${q[6] ? `<img src="${q[6]}">` : ''}
-                        <div style="margin-top:10px;">
-                            ${renderOptions(q, i)}
-                        </div>
+                        <div>${renderOptions(q, i)}</div>
                     </div>`;
             });
-            html += `<button class="grade-btn" style="background:#f39c12; width:80%" onclick="submitQuiz()">إرسال الإجابات</button>`;
+            html += `<button class="grade-btn" style="background:#f39c12; width:85%" onclick="finishQuiz()">إرسال الإجابات ✅</button>`;
             qDiv.innerHTML = html;
         }
 
         function renderOptions(q, i) {
             if (q[3] === "اختيار") {
-                return q[4].split("|").map(o => `<div><input type="radio" name="q${i}" value="${o}"> ${o}</div>`).join("");
+                return q[4].split("|").map(o => `<div style="margin:5px 0;"><input type="radio" name="q${i}" value="${o}"> ${o}</div>`).join("");
             } else if (q[3] === "صح وخطأ") {
                 return `<div><input type="radio" name="q${i}" value="صح"> صح</div><div><input type="radio" name="q${i}" value="خطأ"> خطأ</div>`;
             } else {
-                return `<input type="text" placeholder="اكتب إجابتك هنا">`;
+                return `<input type="text" placeholder="اكتب إجابتك هنا...">`;
             }
         }
 
-        function submitQuiz() {
-            alert("أحسنت يا " + studentName + "! تم استلام إجاباتك بنجاح.");
+        function finishQuiz() {
+            alert(`عمل رائع يا ${studentName}! تم استلام إجاباتك بنجاح.`);
             location.reload();
         }
     </script>
