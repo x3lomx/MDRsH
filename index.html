@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>منصة أبطال العلوم</title>
+    <style>
+        :root {
+            --primary: #00c9ff;
+            --accent: #00ffff;
+            --bg-image: url('https://i.postimg.cc/j5SxZ6NM/ns-fqrtk-(1).png');
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Tahoma', sans-serif;
+            color: white;
+            text-align: center;
+            background: #0f2027;
+            overflow-x: hidden;
+        }
+
+        /* الخلفية المتحركة (Zoom & Pan) */
+        .animated-bg {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: var(--bg-image);
+            background-size: cover;
+            background-position: center;
+            z-index: -1;
+            animation: backgroundMove 30s linear infinite alternate;
+        }
+
+        @keyframes backgroundMove {
+            0% { transform: scale(1) translate(0, 0); }
+            50% { transform: scale(1.1) translate(-1%, -1%); }
+            100% { transform: scale(1) translate(0, 0); }
+        }
+
+        .overlay {
+            background: rgba(0, 0, 0, 0.7); /* تغميق الخلفية لبروز النصوص */
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        h1 { animation: glow 2s infinite alternate; margin-top: 10px; font-size: 2.2rem; }
+        @keyframes glow { from { text-shadow:0 0 10px var(--accent); } to { text-shadow:0 0 25px #00ffcc; } }
+
+        .card {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            padding: 25px;
+            margin: 20px auto;
+            max-width: 800px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .grade-btn {
+            padding: 15px 30px;
+            margin: 10px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(45deg, #00c9ff, #92fe9d);
+            color: #002b36;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: 0.4s;
+        }
+
+        .grade-btn:hover { 
+            background: linear-gradient(45deg, #92fe9d, #00c9ff);
+            transform: scale(1.05) translateY(-3px);
+            box-shadow: 0 0 15px var(--accent);
+        }
+
+        table { width: 100%; border-collapse: collapse; background: white; color: black; margin-top: 20px; border-radius: 10px; overflow: hidden; }
+        th, td { padding: 12px; border: 1px solid #ddd; }
+        th { background: #00c9ff; color: white; }
+
+        input, select { padding: 12px; border-radius: 8px; border: none; margin: 10px; width: 85%; max-width: 350px; font-size: 1rem; }
+        
+        .hidden { display: none; }
+        
+        .admin-link { margin-top: 60px; opacity: 0.4; font-size: 0.9rem; cursor: pointer; color: white; display: inline-block; }
+    </style>
+</head>
+<body>
+
+    <div class="animated-bg"></div>
+    
+    <div class="overlay">
+        <h1>🚀 منصة أبطال العلوم</h1>
+        <p style="font-size: 1.2rem;">مدرسة ذات الصواري المتوسطة وعبدالله بن ابي السرح الإبتدائية</p>
+        <p>مدير المدرسة: أ. سهيل عقيلي | وكيل المدرسة: أ. رضا زاروق | معلم المادة: ريان الأسمري</p>
+
+        <hr style="border: 0.5px solid rgba(255,255,255,0.1); width: 60%; margin: 20px auto;">
+
+        <div id="studentSection">
+            <div id="setupDiv" class="card">
+                <h3>أهلاً بكم في رحلة العلوم.. اختر صفك:</h3>
+                <button class="grade-btn" onclick="loadStudents('رابع')">الرابع الابتدائي</button>
+                <button class="grade-btn" onclick="loadStudents('سادس')">السادس الابتدائي</button>
+                <button class="grade-btn" onclick="loadStudents('أول متوسط')">أول متوسط</button>
+                <button class="grade-btn" onclick="loadStudents('ثاني متوسط')">ثاني متوسط</button>
+                <button class="grade-btn" onclick="loadStudents('ثالث متوسط')">ثالث متوسط</button>
+            </div>
+
+            <div id="loginDiv" class="card hidden">
+                <h4>اختر اسمك من القائمة للمتابعة:</h4>
+                <select id="studentSelect"></select><br>
+                <button class="grade-btn" onclick="selectStudent()">بدء التحدي</button>
+            </div>
+
+            <div id="tabsDiv" class="card hidden"></div>
+            <div id="questionsDiv" class="hidden"></div>
+        </div>
+
+        <div id="teacherSection" class="hidden">
+            <div class="card">
+                <h3>لوحة تحكم المعلم 🛠️</h3>
+                <div id="adminAuth">
+                    <input type="password" id="adminPass" placeholder="كلمة مرور المعلم">
+                    <button class="grade-btn" onclick="checkAdmin()">دخول</button>
+                </div>
+                <div id="adminData" class="hidden">
+                    <button class="grade-btn" style="background:#27ae60; color:white;" onclick="loadAllResults()">تحديث النتائج</button>
+                    <div id="resultsTableContainer" style="overflow-x: auto;"></div>
+                </div>
+                <br>
+                <button onclick="showSection('student')" style="background:none; border:none; color:white; cursor:pointer; text-decoration: underline;">خروج والعودة للرئيسية</button>
+            </div>
+        </div>
+
+        <div class="admin-link" onclick="showSection('teacher')">⚙️ الإدارة</div>
+    </div>
+
+    <script>
+        const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzjmx6_dsXgv2AKCfRNlbW58tWenx5ebadZI7QXXfWgnkUCE0edaiNQll-IuTQqsElPIw/exec";
+        let currentGrade = "", currentTab = "", studentName = "";
+
+        function showSection(sec) {
+            document.getElementById('studentSection').classList.toggle('hidden', sec !== 'student');
+            document.getElementById('teacherSection').classList.toggle('hidden', sec !== 'teacher');
+        }
+
+        async function loadStudents(grade) {
+            currentGrade = grade;
+            const btnContainer = document.getElementById("setupDiv");
+            btnContainer.innerHTML = "<h4>جاري تجهيز قائمة الأسماء...</h4>";
+            
+            try {
+                const res = await fetch(`${WEB_APP_URL}?action=getStudents&grade=${grade}`);
+                const names = await res.json();
+                const sel = document.getElementById("studentSelect");
+                sel.innerHTML = names.map(n => `<option>${n}</option>`).join("");
+                
+                btnContainer.classList.add('hidden');
+                document.getElementById("loginDiv").classList.remove('hidden');
+            } catch (e) { 
+                alert("يوجد مشكلة في الاتصال بقاعدة البيانات. تأكد من إعدادات النشر في Google Script.");
+                location.reload();
+            }
+        }
+
+        function selectStudent() {
+            studentName = document.getElementById("studentSelect").value;
+            document.getElementById("loginDiv").classList.add('hidden');
+            loadTabs(currentGrade);
+        }
+
+        async function loadTabs(grade) {
+            const tabsDiv = document.getElementById("tabsDiv");
+            tabsDiv.classList.remove('hidden');
+            tabsDiv.innerHTML = "<h4>جاري تحميل الوحدات والتبويبات...</h4>";
+            
+            const res = await fetch(`${WEB_APP_URL}?action=getTabs&grade=${grade}`);
+            const tabs = await res.json();
+            
+            let html = `<h3>بطل العلوم: ${studentName}، اختر الوحدة:</h3>`;
+            tabs.forEach(t => {
+                html += `<button class="grade-btn" onclick="loadQuestions('${t}')">${t}</button>`;
+            });
+            tabsDiv.innerHTML = html;
+        }
+
+        async function loadQuestions(tab) {
+            currentTab = tab;
+            const qDiv = document.getElementById("questionsDiv");
+            qDiv.classList.remove('hidden');
+            qDiv.innerHTML = "<div class='card'><h4>جاري تحميل الأسئلة، استعد...</h4></div>";
+            
+            const res = await fetch(`${WEB_APP_URL}?action=getQuestions&grade=${currentGrade}&tab=${tab}`);
+            const data = await res.json();
+            
+            let html = `<div class="card"><h2>تحدي: ${tab}</h2></div>`;
+            data.forEach((r, i) => {
+                if(i === 0) return;
+                html += `
+                    <div class="card q-card" data-correct="${r[5]}" data-points="${r[7]}">
+                        <p style="font-size:1.2rem;"><strong>سؤال ${i}:</strong> ${r[2]}</p>
+                        ${r[6] ? `<img src="${r[6]}" style="max-width:100%; border-radius:10px; margin-bottom:10px;"><br>` : ''}
+                        ${renderInput(r, i)}
+                    </div>`;
+            });
+            html += `<button class="grade-btn" style="background: #f39c12; color:white; width: 80%; padding:20px;" onclick="submitQuiz()">إرسال التحدي ✅</button><br><br>`;
+            qDiv.innerHTML = html;
+            document.getElementById("tabsDiv").classList.add('hidden');
+        }
+
+        function renderInput(r, i) {
+            if (r[3] === "اختيار") {
+                return r[4].split("|").map(o => `<div style="text-align:right; margin:8px 20px;"><input type="radio" name="q${i}" value="${o}"> ${o}</div>`).join("");
+            } else if (r[3] === "صح وخطأ") {
+                return `<div><input type="radio" name="q${i}" value="صح"> صح</div><div><input type="radio" name="q${i}" value="خطأ"> خطأ</div>`;
+            } else {
+                return `<input type="text" name="q${i}" placeholder="اكتب إجابتك هنا">`;
+            }
+        }
+
+        async function submitQuiz() {
+            if(!confirm("هل أنت متأكد من إرسال إجاباتك؟")) return;
+            
+            let answers = [];
+            document.querySelectorAll(".q-card").forEach((c, i) => {
+                let radio = c.querySelector("input:checked");
+                let text = c.querySelector("input[type=text]");
+                answers.push(radio ? radio.value : (text ? text.value : ""));
+            });
+
+            document.getElementById("questionsDiv").innerHTML = "<div class='card'><h4>جاري حساب نتيجتك وحفظها...</h4></div>";
+
+            try {
+                const res = await fetch(WEB_APP_URL, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        action: "saveQuiz",
+                        name: studentName,
+                        grade: currentGrade,
+                        tab: currentTab,
+                        answers: answers
+                    })
+                });
+                const result = await res.json();
+                alert(`ممتاز يا بطل! ${studentName}\nدرجتك المحققة: ${result.score}`);
+                location.reload();
+            } catch (e) { alert("حدث خطأ، يرجى المحاولة مرة أخرى."); }
+        }
+
+        function checkAdmin() {
+            if(document.getElementById("adminPass").value === "مدرسي123") {
+                document.getElementById("adminAuth").classList.add('hidden');
+                document.getElementById("adminData").classList.remove('hidden');
+                loadAllResults();
+            } else { alert("كلمة المرور خاطئة"); }
+        }
+
+        async function loadAllResults() {
+            const container = document.getElementById("resultsTableContainer");
+            container.innerHTML = "جاري تحميل سجل النتائج...";
+            const res = await fetch(`${WEB_APP_URL}?action=getResults`);
+            const data = await res.json();
+            
+            let html = "<table><tr><th>الاسم</th><th>الصف</th><th>الوحدة</th><th>الدرجة</th><th>التوقيت</th></tr>";
+            data.slice(1).reverse().forEach(r => {
+                html += `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${new Date(r[4]).toLocaleString('ar-EG')}</td></tr>`;
+            });
+            html += "</table>";
+            container.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
