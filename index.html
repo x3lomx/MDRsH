@@ -20,7 +20,6 @@
             overflow-x: hidden;
         }
 
-        /* الخلفية المتحركة (Zoom Effect) */
         .animated-bg {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -112,7 +111,6 @@
     </div>
 
     <script>
-        // الرابط المباشر لبيانات قوقل شيت (CSV)
         const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRyf30iF-FRfr7-gIEWnsMoXbmPdTRlYQx4ydftPkpM-RHftF3JInXoa1CbnHZXw4RJ5AFnuQM6JBNI/pub?output=csv";
         
         let allData = [];
@@ -121,28 +119,41 @@
 
         async function fetchCSV(grade) {
             selectedGrade = grade;
-            document.getElementById("setupDiv").innerHTML = "<h4>جاري الاتصال بالسحابة...</h4>";
+            const setupDiv = document.getElementById("setupDiv");
+            setupDiv.innerHTML = "<h4>جاري الاتصال بالسحابة...</h4>";
             
             try {
                 const response = await fetch(CSV_URL);
+                if (!response.ok) throw new Error("لم ينجح الاتصال بالرابط");
+                
                 const csvText = await response.text();
                 allData = parseCSV(csvText);
                 
-                // تصفية الأسماء بناءً على الصف المختار (نفترض العمود 2 هو الصف والعمود 1 هو الاسم)
-                const students = allData.filter(row => row[1] === grade).map(row => row[0]);
+                // فلترة الطلاب: نبحث عن الصف في أي عمود والاسم يكون في أول عمود
+                const students = allData.filter(row => row.includes(grade)).map(row => row[0]);
+
+                if (students.length === 0) {
+                    alert("عذراً، لم يتم العثور على أسماء لهذا الصف في ملف الإكسل. تأكد من مطابقة اسم الصف تماماً.");
+                    location.reload();
+                    return;
+                }
                 
                 const sel = document.getElementById("studentSelect");
                 sel.innerHTML = students.map(s => `<option>${s}</option>`).join("");
                 
-                document.getElementById("setupDiv").classList.add("hidden");
+                setupDiv.classList.add("hidden");
                 document.getElementById("loginDiv").classList.remove("hidden");
             } catch (e) {
-                alert("حدث خطأ في جلب البيانات. تأكد من إعداد 'النشر للويب' في قوقل شيت.");
+                console.error(e);
+                alert("فشل جلب البيانات. تأكد من:\n1. أن الملف 'منشور للويب' بصيغة CSV.\n2. أن الرابط في الكود صحيح.");
+                location.reload();
             }
         }
 
         function parseCSV(text) {
-            return text.split('\n').map(row => row.split(',').map(cell => cell.trim().replace(/^"|"$/g, '')));
+            return text.split('\n')
+                       .filter(row => row.trim() !== '')
+                       .map(row => row.split(',').map(cell => cell.trim().replace(/^"|"$/g, '')));
         }
 
         function showTabs() {
@@ -151,11 +162,10 @@
             const tabsDiv = document.getElementById("tabsDiv");
             tabsDiv.classList.remove("hidden");
 
-            // جلب التبويبات (الوحدات) الفريدة للصف المختار
-            // نفترض أن العمود 1 في شيت الأسئلة هو الصف والعمود 2 هو التبويب
+            // جلب الوحدات/التبويبات لهذا الصف (نفترض العمود 2 هو التبويب)
             const tabs = [...new Set(allData.filter(r => r[0] === selectedGrade).map(r => r[1]))];
             
-            let html = `<h3>مرحباً ${studentName}، اختر الوحدة التعليمية:</h3>`;
+            let html = `<h3>أهلاً بك يا ${studentName}</h3><p>اختر الوحدة الدراسية:</p>`;
             tabs.forEach(t => {
                 if(t && t !== "التبويب") html += `<button class="grade-btn" onclick="loadQuestions('${t}')">${t}</button>`;
             });
@@ -167,7 +177,6 @@
             const qDiv = document.getElementById("questionsDiv");
             qDiv.classList.remove("hidden");
 
-            // تصفية الأسئلة بناءً على الصف والتبويب
             const questions = allData.filter(r => r[0] === selectedGrade && r[1] === tabName);
             
             let html = `<div class="card"><h2>وحدة: ${tabName}</h2></div>`;
@@ -194,7 +203,7 @@
         }
 
         function finishQuiz() {
-            alert(`عمل رائع يا ${studentName}! تم استلام إجاباتك بنجاح.`);
+            alert(`تم استلام إجاباتك يا ${studentName}.. بارك الله فيك!`);
             location.reload();
         }
     </script>
